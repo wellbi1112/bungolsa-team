@@ -87,14 +87,8 @@ function calcAverageHandicap(team: Team): number | null {
 }
 
 const App: React.FC = () => {
-  // 참가자 목록 (초기 예시 5명)
-  const [players, setPlayers] = useState<Player[]>([
-    { id: 1, name: "김철수", handicap: 18 },
-    { id: 2, name: "박영희", handicap: 25 },
-    { id: 3, name: "이민수", handicap: 10 },
-    { id: 4, name: "정우성", handicap: 15 },
-    { id: 5, name: "한지민", handicap: 22 },
-  ]);
+  // ✅ 초기 참가자 리스트를 비워둠
+  const [players, setPlayers] = useState<Player[]>([]);
 
   // 새 참가자 입력용 상태
   const [newName, setNewName] = useState<string>("");
@@ -238,13 +232,13 @@ const App: React.FC = () => {
           <div className="player-input-row">
             <input
               type="text"
-              placeholder="이름"
+              placeholder="예: 그린"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
               type="number"
-              placeholder="HCP"
+              placeholder="예: 10"
               value={newHandicap}
               onChange={(e) => setNewHandicap(e.target.value)}
             />
