@@ -11,7 +11,6 @@ type Team = Player[];
 
 type Mode = "random" | "balanced";
 
-// 팀 이름 후보들
 const TEAM_NAME_PRESETS = [
   "이글방",
   "버디방",
@@ -25,7 +24,6 @@ const TEAM_NAME_PRESETS = [
   "원온도전방",
 ];
 
-// 공용 셔플 함수
 function shuffle<T>(arr: T[]): T[] {
   return arr
     .map((v) => ({ v, r: Math.random() }))
@@ -33,17 +31,11 @@ function shuffle<T>(arr: T[]): T[] {
     .map((x) => x.v);
 }
 
-// 팀 이름 개수만큼 랜덤으로 뽑기
 function generateTeamNames(count: number): string[] {
-  const shuffledNames = shuffle(TEAM_NAME_PRESETS);
+  const shuffled = shuffle(TEAM_NAME_PRESETS);
   const names: string[] = [];
-
   for (let i = 0; i < count; i++) {
-    if (i < shuffledNames.length) {
-      names.push(shuffledNames[i]);
-    } else {
-      names.push(`방/팀 ${i + 1}`);
-    }
+    names.push(shuffled[i] || `방/팀 ${i + 1}`);
   }
   return names;
 }
@@ -68,3 +60,151 @@ function parsePlayers(text: string): Player[] {
       handicap,
     };
   });
+}
+
+function makeRandomTeams(players: Player[], teamSize: number): Team[] {
+  const shuffled = shuffle(players);
+  const teams: Team[] = [];
+  for (let i = 0; i < shuffled.length; i += teamSize) {
+    teams.push(shuffled.slice(i, i + teamSize));
+  }
+  return teams;
+}
+
+function makeBalancedTeams(players: Player[], teamSize: number): Team[] {
+  const sorted = [...players].sort((a, b) => {
+    const ha = a.handicap ?? 999;
+    const hb = b.handicap ?? 999;
+    return ha - hb;
+  });
+
+  const numTeams = Math.ceil(players.length / teamSize);
+  const teams: Team[] = Array.from({ length: numTeams }, () => []);
+
+  let index = 0;
+  let direction = 1;
+
+  while (index < sorted.length) {
+    if (direction === 1) {
+      for (let t = 0; t < numTeams && index < sorted.length; t++) {
+        teams[t].push(sorted[index++]);
+      }
+    } else {
+      for (let t = numTeams - 1; t >= 0 && index < sorted.length; t--) {
+        teams[t].push(sorted[index++]);
+      }
+    }
+    direction *= -1;
+  }
+
+  return teams;
+}
+
+function calcAverageHandicap(team: Team): number | null {
+  const hs = team
+    .map((p) => p.handicap)
+    .filter((h): h is number => typeof h === "number");
+  if (hs.length === 0) return null;
+  return hs.reduce((a, b) => a + b, 0) / hs.length;
+}
+
+const App: React.FC = () => {
+  const [playersInput, setPlayersInput] = useState<string>(
+`김철수,18
+박영희,25
+이민수,10
+정우성,15
+한지민,22`
+  );
+  const [teamSize, setTeamSize] = useState<number>(3);
+  const [mode, setMode] = useState<Mode>("random");
+  const [teams, setTeams] = useState<Team[] | null>(null);
+  const [teamNames, setTeamNames] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+
+  const totalPlayers = teams?.reduce((acc, team) => acc + team.length, 0) ?? 0;
+
+  const handleMakeTeams = () => {
+    const players = parsePlayers(playersInput);
+    if (players.length === 0) {
+      setError("참가자를 입력해주세요.");
+      setTeams(null);
+      setTeamNames([]);
+      return;
+    }
+    if (teamSize <= 0) {
+      setError("팀당 인원을 1명 이상으로 설정해주세요.");
+      setTeams(null);
+      setTeamNames([]);
+      return;
+    }
+    setError(null);
+    setCopyMessage(null);
+
+    let result: Team[];
+    if (mode === "balanced") {
+      result = makeBalancedTeams(players, teamSize);
+    } else {
+      result = makeRandomTeams(players, teamSize);
+    }
+
+    setTeams(result);
+    setTeamNames(generateTeamNames(result.length));
+  };
+
+  const handleReset = () => {
+    setTeams(null);
+    setTeamNames([]);
+    setCopyMessage(null);
+    setError(null);
+  };
+
+  const handleCopyResults = async () => {
+    if (!teams || teams.length === 0) return;
+
+    const lines: string[] = [];
+    lines.push("[분골사 팀편성 결과]");
+    lines.push(`총 ${totalPlayers}명, ${teams.length}개 방/팀`);
+    lines.push("");
+
+    teams.forEach((team, idx) => {
+      const name = teamNames[idx] || `방/팀 ${idx + 1}`;
+      const avg = calcAverageHandicap(team);
+      lines.push(
+        `■ ${name}${avg !== null ? ` (평균 HCP ${avg.toFixed(1)})` : ""}`
+      );
+      const members = team
+        .map((p) =>
+          p.handicap != null ? `${p.name}(HCP ${p.handicap})` : p.name
+        )
+        .join(", ");
+      lines.push(members);
+      lines.push("");
+    });
+
+    const text = lines.join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyMessage("결과가 복사되었습니다. 카카오톡에 붙여넣기 해주세요.");
+    } catch (e) {
+      setCopyMessage("자동 복사가 지원되지 않습니다. 직접 복사해주세요.");
+    }
+
+    setTimeout(() => setCopyMessage(null), 5000);
+  };
+
+  return (
+    <div className="app">
+      <header className="header">
+        <h1>분골사 팀편성</h1>
+        <p className="subtitle">
+          스크린골프 방·팀 편성, 이제 10초 만에 끝!
+        </p>
+      </header>
+    </div>
+  );
+};
+
+export default App;
