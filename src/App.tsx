@@ -186,8 +186,8 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <header className="header">
-        <h1>분골사 팀편성 요정</h1>
-        <p className="subtitle">
+      <h1>⛳분골사 팀편성 요정</h1>
+       <p className="subtitle">
           스크린골프 방·팀 편성, 이제 10초 만에 끝내세요.
           <br />이름과 핸디캡만 입력하면 분골사 요정이 대신 짜드립니다.
         </p>
@@ -201,13 +201,13 @@ const App: React.FC = () => {
           <div className="player-input-row">
             <input
               type="text"
-              placeholder="예: 그린"
+              placeholder="닉네임을 입력해 주세요"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
               type="number"
-              placeholder="예: 10"
+              placeholder="핸디캡을 입력해 주세요 예: 10"
               value={newHandicap}
               onChange={(e) => setNewHandicap(e.target.value)}
             />
