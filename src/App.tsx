@@ -200,9 +200,135 @@ const App: React.FC = () => {
       <header className="header">
         <h1>분골사 팀편성</h1>
         <p className="subtitle">
-          스크린골프 방·팀 편성, 이제 10초 만에 끝!
+          스크린골프 방·팀 편성, 이제 10초 만에 끝내세요.
+          <br />
+          이름·핸디캡만 넣으면 분골사가 대신 짜드립니다.
         </p>
       </header>
+
+      <main>
+        <section className="card">
+          <h2>참가자 입력</h2>
+          <p className="description">
+            한 줄에 한 명씩 입력해주세요.{" "}
+            <span className="hint">이름,핸디캡</span> 형식도 지원합니다.
+            <br />
+            예) <code>김철수,18</code> / <code>박영희,25</code> / 핸디캡 모르면 이름만 적어도 됩니다.
+          </p>
+          <textarea
+            value={playersInput}
+            onChange={(e) => setPlayersInput(e.target.value)}
+            rows={8}
+          />
+        </section>
+
+        <section className="card">
+          <h2>방/팀 설정</h2>
+          <div className="form-row">
+            <label>팀당 인원</label>
+            <select
+              value={teamSize}
+              onChange={(e) => setTeamSize(Number(e.target.value))}
+            >
+              <option value={2}>2명</option>
+              <option value={3}>3명</option>
+              <option value={4}>4명</option>
+              <option value={5}>5명</option>
+            </select>
+          </div>
+
+          <div className="form-row">
+            <label>편성 방식</label>
+            <div className="radio-group">
+              <label>
+                <input
+                  type="radio"
+                  value="random"
+                  checked={mode === "random"}
+                  onChange={() => setMode("random")}
+                />
+                랜덤 배정 (가볍게 섞고 싶을 때)
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="balanced"
+                  checked={mode === "balanced"}
+                  onChange={() => setMode("balanced")}
+                />
+                실력 균등 (핸디캡 기준으로 비슷하게)
+              </label>
+            </div>
+          </div>
+
+          {error && <p className="error">{error}</p>}
+
+          <div className="button-row">
+            <button className="primary" onClick={handleMakeTeams}>
+              방/팀 추첨하기
+            </button>
+            {teams && (
+              <button className="secondary" onClick={handleReset}>
+                초기화
+              </button>
+            )}
+          </div>
+        </section>
+
+        {teams && (
+          <section className="card">
+            <h2>추첨 결과</h2>
+            <p className="summary">
+              총 <strong>{totalPlayers}</strong>명,{" "}
+              <strong>{teams.length}</strong>개 방/팀으로 추첨되었습니다.
+            </p>
+
+            <div className="results-actions">
+              <button className="secondary fullwidth" onClick={handleCopyResults}>
+                결과 복사하기 (카카오톡 공유용)
+              </button>
+              {copyMessage && (
+                <p className="copy-message">{copyMessage}</p>
+              )}
+            </div>
+
+            <div className="teams-grid">
+              {teams.map((team, idx) => {
+                const avg = calcAverageHandicap(team);
+                const label = teamNames[idx] || `방/팀 ${idx + 1}`;
+                return (
+                  <div key={idx} className="team-card">
+                    <div className="team-header">
+                      <span className="team-name">{label}</span>
+                      {avg !== null && (
+                        <span className="team-meta">
+                          평균 핸디캡 {avg.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                    <ul className="player-list">
+                      {team.map((p) => (
+                        <li key={p.id}>
+                          {p.name}
+                          {p.handicap != null && (
+                            <span className="handicap">
+                              (HCP {p.handicap})
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <footer className="footer">
+        <span>© {new Date().getFullYear()} 분골사 팀편성</span>
+      </footer>
     </div>
   );
 };
