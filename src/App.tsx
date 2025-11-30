@@ -233,7 +233,6 @@ const App: React.FC = () => {
               <option value={2}>2명</option>
               <option value={3}>3명</option>
               <option value={4}>4명</option>
-              <option value={5}>5명</option>
             </select>
           </div>
 
@@ -327,7 +326,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="footer">
-        <span>© {new Date().getFullYear()} 분골사 팀편성</span>
+        <span>© {new Date().getFullYear()} 분골사 팀편성 요정</span>
       </footer>
     </div>
   );
