@@ -40,28 +40,6 @@ function generateTeamNames(count: number): string[] {
   return names;
 }
 
-function parsePlayers(text: string): Player[] {
-  const lines = text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  return lines.map((line, idx) => {
-    const [nameRaw, handicapRaw] = line.split(",").map((p) => p?.trim());
-    const name = nameRaw || `참가자${idx + 1}`;
-    const handicap =
-      handicapRaw && !Number.isNaN(Number(handicapRaw))
-        ? Number(handicapRaw)
-        : undefined;
-
-    return {
-      id: idx + 1,
-      name,
-      handicap,
-    };
-  });
-}
-
 function makeRandomTeams(players: Player[], teamSize: number): Team[] {
   const shuffled = shuffle(players);
   const teams: Team[] = [];
@@ -109,13 +87,20 @@ function calcAverageHandicap(team: Team): number | null {
 }
 
 const App: React.FC = () => {
-  const [playersInput, setPlayersInput] = useState<string>(
-`김철수,18
-박영희,25
-이민수,10
-정우성,15
-한지민,22`
-  );
+  // 참가자 목록 (초기 예시 5명)
+  const [players, setPlayers] = useState<Player[]>([
+    { id: 1, name: "김철수", handicap: 18 },
+    { id: 2, name: "박영희", handicap: 25 },
+    { id: 3, name: "이민수", handicap: 10 },
+    { id: 4, name: "정우성", handicap: 15 },
+    { id: 5, name: "한지민", handicap: 22 },
+  ]);
+
+  // 새 참가자 입력용 상태
+  const [newName, setNewName] = useState<string>("");
+  const [newHandicap, setNewHandicap] = useState<string>("");
+
+  // 팀 편성 옵션 & 결과 상태
   const [teamSize, setTeamSize] = useState<number>(3);
   const [mode, setMode] = useState<Mode>("random");
   const [teams, setTeams] = useState<Team[] | null>(null);
@@ -123,12 +108,43 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
-  const totalPlayers = teams?.reduce((acc, team) => acc + team.length, 0) ?? 0;
+  const totalPlayers =
+    teams?.reduce((acc, team) => acc + team.length, 0) ?? 0;
 
+  // 참가자 추가
+  const addPlayer = () => {
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      setError("이름을 입력해주세요.");
+      return;
+    }
+
+    const handicapValue =
+      newHandicap.trim() !== "" && !Number.isNaN(Number(newHandicap))
+        ? Number(newHandicap)
+        : undefined;
+
+    const newPlayer: Player = {
+      id: players.length ? players[players.length - 1].id + 1 : 1,
+      name: trimmedName,
+      handicap: handicapValue,
+    };
+
+    setPlayers([...players, newPlayer]);
+    setNewName("");
+    setNewHandicap("");
+    setError(null);
+  };
+
+  // 참가자 삭제
+  const removePlayer = (id: number) => {
+    setPlayers(players.filter((p) => p.id !== id));
+  };
+
+  // 팀 만들기
   const handleMakeTeams = () => {
-    const players = parsePlayers(playersInput);
     if (players.length === 0) {
-      setError("참가자를 입력해주세요.");
+      setError("최소 1명 이상의 참가자를 추가해주세요.");
       setTeams(null);
       setTeamNames([]);
       return;
@@ -153,6 +169,7 @@ const App: React.FC = () => {
     setTeamNames(generateTeamNames(result.length));
   };
 
+  // 결과만 초기화 (참가자 리스트는 유지)
   const handleReset = () => {
     setTeams(null);
     setTeamNames([]);
@@ -160,11 +177,12 @@ const App: React.FC = () => {
     setError(null);
   };
 
+  // 결과 복사 (카카오톡 공유용)
   const handleCopyResults = async () => {
     if (!teams || teams.length === 0) return;
 
     const lines: string[] = [];
-    lines.push("[분골사 팀편성 결과]");
+    lines.push("[분골사 팀편성 요정 결과]");
     lines.push(`총 ${totalPlayers}명, ${teams.length}개 방/팀`);
     lines.push("");
 
@@ -200,28 +218,62 @@ const App: React.FC = () => {
       <header className="header">
         <h1>분골사 팀편성 요정</h1>
         <p className="subtitle">
-          스크린필드 방·팀 편성, 이제 10초 만에 끝내세요.
+          스크린골프 방·팀 편성, 이제 10초 만에 끝내세요.
           <br />
-          이름·핸디캡만 넣으면 분골사 팀편성 요정이 대신 짜드립니다.
+          이름과 핸디캡만 입력하면 분골사 요정이 대신 짜드립니다.
         </p>
       </header>
 
       <main>
+        {/* 참가자 추가 섹션 */}
         <section className="card">
-          <h2>참가자 입력</h2>
+          <h2>참가자 추가</h2>
           <p className="description">
-            한 줄에 한 명씩 입력해주세요.{" "}
-            <span className="hint">이름,핸디캡</span> 형식도 지원합니다.
+            이름과 핸디캡(선택 입력)을 각각 입력한 뒤{" "}
+            <strong>추가</strong> 버튼을 누르세요.
             <br />
-            예) <code>김철수,18</code> / <code>박영희,25</code> / 핸디캡 모르면 이름만 적어도 됩니다.
+            핸디캡을 모르면 비워두셔도 됩니다.
           </p>
-          <textarea
-            value={playersInput}
-            onChange={(e) => setPlayersInput(e.target.value)}
-            rows={8}
-          />
+
+          <div className="player-input-row">
+            <input
+              type="text"
+              placeholder="이름"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="HCP"
+              value={newHandicap}
+              onChange={(e) => setNewHandicap(e.target.value)}
+            />
+            <button className="primary" onClick={addPlayer}>
+              추가
+            </button>
+          </div>
+
+          <ul className="player-list">
+            {players.map((p) => (
+              <li key={p.id}>
+                <span>
+                  {p.name}
+                  {p.handicap != null && (
+                    <span className="handicap"> (HCP {p.handicap})</span>
+                  )}
+                </span>
+                <button
+                  className="ghost-button"
+                  onClick={() => removePlayer(p.id)}
+                >
+                  삭제
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
 
+        {/* 팀 설정 섹션 */}
         <section className="card">
           <h2>방/팀 설정</h2>
           <div className="form-row">
@@ -274,6 +326,7 @@ const App: React.FC = () => {
           </div>
         </section>
 
+        {/* 결과 섹션 */}
         {teams && (
           <section className="card">
             <h2>추첨 결과</h2>
@@ -283,7 +336,10 @@ const App: React.FC = () => {
             </p>
 
             <div className="results-actions">
-              <button className="secondary fullwidth" onClick={handleCopyResults}>
+              <button
+                className="secondary fullwidth"
+                onClick={handleCopyResults}
+              >
                 결과 복사하기 (카카오톡 공유용)
               </button>
               {copyMessage && (
@@ -311,6 +367,7 @@ const App: React.FC = () => {
                           {p.name}
                           {p.handicap != null && (
                             <span className="handicap">
+                              {" "}
                               (HCP {p.handicap})
                             </span>
                           )}
@@ -326,7 +383,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="footer">
-        <span>© {new Date().getFullYear()} 분골사 팀편성 요정</span>
+        <span>© {new Date().getFullYear()} 분골사 팀편성 요정 by 발걸음</span>
       </footer>
     </div>
   );
