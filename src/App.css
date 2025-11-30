@@ -29,6 +29,7 @@ body {
   margin-top: 8px;
   color: #6b7280;
   font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .card {
@@ -105,15 +106,16 @@ select {
 .button-row {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 button {
   cursor: pointer;
   border-radius: 999px;
   border: none;
-  padding: 10px 14px;
-  font-size: 0.9rem;
+  padding: 12px 16px;
+  font-size: 0.95rem;
   font-weight: 500;
 }
 
@@ -145,6 +147,22 @@ button.secondary:hover {
 .summary {
   font-size: 0.95rem;
   margin-bottom: 12px;
+}
+
+.results-actions {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fullwidth {
+  width: 100%;
+}
+
+.copy-message {
+  font-size: 0.8rem;
+  color: #4b5563;
 }
 
 .teams-grid {
@@ -204,4 +222,24 @@ button.secondary:hover {
   font-size: 0.8rem;
   color: #9ca3af;
   text-align: center;
+}
+
+/* 모바일에서 버튼/레이아웃 개선 */
+@media (max-width: 480px) {
+  .app {
+    padding: 16px 10px 32px;
+  }
+
+  .button-row {
+    flex-direction: column;
+  }
+
+  button.primary,
+  button.secondary {
+    width: 100%;
+  }
+
+  .card {
+    padding: 14px 12px 18px;
+  }
 }
