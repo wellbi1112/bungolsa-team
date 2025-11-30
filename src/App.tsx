@@ -186,7 +186,7 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <header className="header">
-      <h1>⛳분골사 팀편성 요정</h1>
+      <h1>⛳분골사 팀편성 요정🧚‍♀️✨</h1>
        <p className="subtitle">
           스크린골프 방·팀 편성, 이제 10초 만에 끝내세요.
           <br />이름과 핸디캡만 입력하면 분골사 요정이 대신 짜드립니다.
@@ -328,7 +328,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="footer">
-        © {new Date().getFullYear()} 분골사 팀편성 요정 by 발걸음
+        © {new Date().getFullYear()} 분골사 팀편성 요정🧚‍♀️ by 발걸음 ✨
       </footer>
     </div>
   );
