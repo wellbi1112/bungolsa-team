@@ -201,13 +201,13 @@ const App: React.FC = () => {
           <div className="player-input-row">
             <input
               type="text"
-              placeholder="예: 김철수"
+              placeholder="예: 그린"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
               type="number"
-              placeholder="예: 18"
+              placeholder="예: 10"
               value={newHandicap}
               onChange={(e) => setNewHandicap(e.target.value)}
             />
@@ -328,7 +328,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="footer">
-        © {new Date().getFullYear()} 분골사 팀편성 요정
+        © {new Date().getFullYear()} 분골사 팀편성 요정 by 발걸음
       </footer>
     </div>
   );
