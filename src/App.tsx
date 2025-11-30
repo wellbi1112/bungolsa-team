@@ -198,11 +198,11 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <header className="header">
-        <h1>분골사 팀편성</h1>
+        <h1>분골사 팀편성 요정</h1>
         <p className="subtitle">
-          스크린골프 방·팀 편성, 이제 10초 만에 끝내세요.
+          스크린필드 방·팀 편성, 이제 10초 만에 끝내세요.
           <br />
-          이름·핸디캡만 넣으면 분골사가 대신 짜드립니다.
+          이름·핸디캡만 넣으면 분골사 팀편성 요정이 대신 짜드립니다.
         </p>
       </header>
 
