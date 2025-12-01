@@ -43,25 +43,53 @@ function generateTeamNames(count: number): string[] {
   return names;
 }
 
-// 🔹 성별을 고려한 랜덤 팀 편성
+/** 🔹 성별을 고려하면서도 팀당 인원(teamSize)을 넘지 않게 랜덤 편성 */
 function makeRandomTeamsWithGender(players: Player[], teamSize: number): Team[] {
+  if (players.length === 0) return [];
+
   const males = shuffle(players.filter((p) => p.gender === "M"));
   const females = shuffle(players.filter((p) => p.gender === "F"));
   const neutral = shuffle(players.filter((p) => p.gender === "N"));
 
   const total = players.length;
   const numTeams = Math.ceil(total / teamSize) || 1;
+
   const teams: Team[] = Array.from({ length: numTeams }, () => []);
 
+  // 현재 인원이 가장 적고, 아직 teamSize 미만인 팀 선택
+  const pickTeamIndex = (): number => {
+    const candidates = teams
+      .map((t, idx) => ({ idx, size: t.length }))
+      .filter(({ size }) => size < teamSize);
+
+    // 모든 팀이 teamSize에 도달했으면, 그냥 가장 적은 팀에 넣기 (이론상 거의 안 옴)
+    const pool = candidates.length
+      ? candidates
+      : teams.map((t, idx) => ({ idx, size: t.length }));
+
+    let minSize = Infinity;
+    let indices: number[] = [];
+    for (const c of pool) {
+      if (c.size < minSize) {
+        minSize = c.size;
+        indices = [c.idx];
+      } else if (c.size === minSize) {
+        indices.push(c.idx);
+      }
+    }
+
+    // 최소 인원을 가진 팀들 중에서 랜덤 선택
+    return indices[Math.floor(Math.random() * indices.length)];
+  };
+
   const assignGroup = (group: Player[]) => {
-    let idx = 0;
-    while (group.length) {
-      const p = group.shift()!;
+    for (const p of group) {
+      const idx = pickTeamIndex();
       teams[idx].push(p);
-      idx = (idx + 1) % numTeams;
     }
   };
 
+  // 남 → 여 → 기타 순서로 분배 (각 그룹 내부는 이미 shuffle 되어 있음)
   assignGroup(males);
   assignGroup(females);
   assignGroup(neutral);
@@ -69,8 +97,10 @@ function makeRandomTeamsWithGender(players: Player[], teamSize: number): Team[] 
   return teams;
 }
 
-// 🔹 실력(핸디캡) 균등 편성
+/** 🔹 핸디캡 기준 실력 균등 편성 */
 function makeBalancedTeams(players: Player[], teamSize: number): Team[] {
+  if (players.length === 0) return [];
+
   const sorted = [...players].sort((a, b) => {
     const ha = a.handicap ?? 999;
     const hb = b.handicap ?? 999;
@@ -126,7 +156,7 @@ const App: React.FC = () => {
   const addPlayer = () => {
     const name = newName.trim();
     if (!name) {
-      setError("이름을 입력해주세요.");
+      setError("닉네임을 입력해주세요.");
       return;
     }
 
@@ -178,6 +208,7 @@ const App: React.FC = () => {
     setTeams(null);
     setTeamNames([]);
     setCopyMessage(null);
+    setError(null);
   };
 
   const handleCopyResults = async () => {
@@ -212,7 +243,7 @@ const App: React.FC = () => {
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
       setCopyMessage("복사 완료! 카카오톡에 붙여넣기 해주세요.");
-    } catch (err) {
+    } catch {
       setCopyMessage("자동 복사가 안 되는 환경입니다. 직접 복사해주세요.");
     }
   };
@@ -224,7 +255,7 @@ const App: React.FC = () => {
         <p className="subtitle">
           스크린골프 방·팀 편성, 이제 10초 만에 끝내세요.
           <br />
-          이름·핸디캡·성별만 입력하면 분골사 요정이 대신 짜드립니다.
+          닉네임·핸디캡·성별만 입력하면 분골사 요정이 대신 짜드립니다.
         </p>
       </header>
 
@@ -239,7 +270,7 @@ const App: React.FC = () => {
           <div className="player-input-row">
             <input
               type="text"
-              placeholder="예: 닉네임을 입력해 주세요"
+              placeholder="예: 닉네임을 입력하세요"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
@@ -247,7 +278,7 @@ const App: React.FC = () => {
               type="text"
               inputMode="numeric"
               pattern="-?[0-9]*"
-              placeholder="핸디캡을 입력해 주세요 예: -3"
+              placeholder="핸디캡을 입력하세요 예: -3"
               value={newHandicap}
               onChange={(e) => setNewHandicap(e.target.value)}
             />
@@ -262,6 +293,7 @@ const App: React.FC = () => {
               <label>
                 <input
                   type="radio"
+                  name="gender"
                   value="M"
                   checked={newGender === "M"}
                   onChange={() => setNewGender("M")}
@@ -271,6 +303,7 @@ const App: React.FC = () => {
               <label>
                 <input
                   type="radio"
+                  name="gender"
                   value="F"
                   checked={newGender === "F"}
                   onChange={() => setNewGender("F")}
@@ -280,6 +313,7 @@ const App: React.FC = () => {
               <label>
                 <input
                   type="radio"
+                  name="gender"
                   value="N"
                   checked={newGender === "N"}
                   onChange={() => setNewGender("N")}
@@ -336,6 +370,7 @@ const App: React.FC = () => {
               <label>
                 <input
                   type="radio"
+                  value="random"
                   checked={mode === "random"}
                   onChange={() => setMode("random")}
                 />
@@ -344,6 +379,7 @@ const App: React.FC = () => {
               <label>
                 <input
                   type="radio"
+                  value="balanced"
                   checked={mode === "balanced"}
                   onChange={() => setMode("balanced")}
                 />
